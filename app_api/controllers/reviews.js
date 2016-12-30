@@ -6,8 +6,8 @@ var sendJsonResponse = function (res, status, content) {
 	res.json(content);
 }
 
-var updateAverageRating = function (locationId) {
-	location.findById(locationId).select('rating reviews').exec( function (err, lcoation) {
+var updateAverageRating = function (locationId, updateAverageRatingCallback) {
+	location.findById(locationId).select('rating reviews').exec( function (err, location) {
 		if (err) {
 			console.log(err);
 			return;
@@ -26,13 +26,13 @@ var updateAverageRating = function (locationId) {
 
 		location.rating = parseInt(ratingTotal/reviewCount, 10);
 
-		location.save( function (err, location) {
-			if (err) {
-				console.log(err);
-			} else {
-				console.log("Average rating updated to", location.rating);
-			}
-		});
+		location.save( updateAverageRatingCallback );//function (err, location) {
+			// if (err) {
+			// 	console.log(err);
+			// } else {
+			// 	console.log("Average rating updated to", location.rating);
+			// }
+		//});
 	});
 }
 
@@ -48,13 +48,28 @@ var doAddReview = function (req, res, location) {
 		reviewText: req.body.reviewText
 	});
 
+	var currentRating = location.rating;
+	var updateAverageRatingCallback = function (err, location) {
+		var review = location.reviews[location.reviews.length - 1];
+		var response = { review : review };
+
+		if (err) {
+			console.log(err);			
+			response.rating = currentRating;			
+			sendJsonResponse(res, 201, response);			
+		} else {
+			console.log("Average rating updated to", location.rating);
+			response.rating = location.rating;
+			sendJsonResponse(res, 201, response);
+		}		
+	};
 	location.save(function (err, location) {
 		if (err) {
+			console.log(err);
 			sendJsonResponse(res, 400, err);
 		} else {
-			updateAverageRating(location._id);
-			var review = location.reviews[location.reviews.length - 1];
-			sendJsonResponse(res, 200, review);
+			console.log("location._id: " + location._id);			
+			updateAverageRating(location._id, updateAverageRatingCallback);
 		}
 	});
 }
@@ -66,7 +81,7 @@ module.exports.reviewsCreate = function (req, res) {
 		return;
 	}
 
-	location.findById(locationId).select('reviews').exec( function (err, location) {
+	location.findById(locationId).select('rating reviews').exec( function (err, location) {
 		if (err) {
 			sendJsonResponse(res, 400, err);			
 		} else {
@@ -174,6 +189,7 @@ module.exports.reviewsDeleteOne = function (req, res) {
 
 		if (err) {
 			sendJsonResponse(res, 400, err);
+			return;
 		}
 
 		if (!location.reviews || location.reviews.length <= 0) {

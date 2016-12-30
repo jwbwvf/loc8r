@@ -49,25 +49,25 @@ module.exports.locationsListByDistance = function (req, res) {
 
 	var geoOptions = {
 		spherical : true,
-		maxDistance : theEarth.getRadiansFromDistance(20),
+		maxDistance : 100000,//theEarth.getRadiansFromDistance(20),
 		num : 10
 	};
 
-	if (!lng || !lat) {
+	if ((!lng && lng !== 0) || (!lat && lat !== 0)) {
 		sendJsonResponse(res, 404, {"message" : "lng and lat query parameters are required"});
 		return;
 	}
 
-	location.geoNear(point, geoOptions, function (err, resutls, stats) {
+	location.geoNear(point, geoOptions, function (err, results, stats) {
 		if (err) {
 			sendJsonResponse(res, 404, err);
 			return;
 		}
 
 		var locations = [];
-		resutls.forEach(function (doc) {
+		results.forEach(function (doc) {
 			locations.push({
-				distance: theEarth.getDistanceFromRadians(doc.dis),
+				distance: doc.dis,//theEarth.getDistanceFromRadians(doc.dis),
 				name: doc.obj.name,
 				address: doc.obj.address,
 				rating: doc.obj.rating,

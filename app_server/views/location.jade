@@ -26,17 +26,17 @@ block content
               each facility in location.facilities
                 span.label.label-warning= facility
                 | &nbsp;
-        .col-xs-12.col-sm-6.location.map
+        .col-xs-12.col-sm-6.location-map
           .panel.panel-primary
             .panel-heading
               h2.panel-title Location map
             .panel-body
-              img.img-responsive.img-rounded(src='http://maps.googleapis.com/maps/api/staticmap?center=#{location.map.coordinates.lat},#{location.map.coordinates.lng}&zoom=#{location.map.zoom}&size=#{location.map.size}&sensor=#{location.map.sensor}&markers=#{location.map.coordinates.lat},#{location.map.coordinates.lng}&scale=#{location.map.scale}')
+              img.img-responsive.img-rounded(src="http://maps.googleapis.com/maps/api/staticmap?center=#{location.coordinates.lat},#{location.coordinates.lng}&zoom=17&size=400x350&sensor=false&markers=#{location.coordinates.lat},#{location.coordinates.lng}&scale=2")
       .row
         .col-xs-12
           .panel.panel-primary.review-panel
             .panel-heading
-              a.btn.btn-default.pull-right(href='/location/review/new') Add review
+              a.btn.btn-default.pull-right(href="/location/#{location._id}/review/new") Add review
               h2.panel-title Customer reviews
             .panel-body.review-container
               each review in location.reviews
@@ -46,9 +46,10 @@ block content
                       span.rating
                         +outputRating(review.rating)       
                       span.reviewAuthor= review.author
-                      small.reviewTimestamp= review.date
+                      small.reviewTimestamp 
+                        +formatDate(review.createdOn)
                     .col-xs-12
-                      p= review.comment
+                      p= review.reviewText
     .col-xs-12.col-md-3
       p.lead= sidebar.context
       p= sidebar.callToAction

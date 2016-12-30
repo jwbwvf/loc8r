@@ -42,4 +42,6 @@ process.on('SIGINT', function () {
 	});
 });
 
+//referencing the other models to pull into the exress api app
 require('./locations');
+require('./users');

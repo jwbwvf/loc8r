@@ -1,0 +1,3 @@
+the google map api requires a key
+map image won't show up until after the link is pasted in the browser, then refresh the app and it shows up
+look into this https://developers.google.com/maps/documentation/javascript/get-api-key#key
