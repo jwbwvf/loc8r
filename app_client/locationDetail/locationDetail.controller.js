@@ -3,10 +3,12 @@
 		.module('loc8rApp')
 		.controller('locationDetailController', locationDetailController);
 
-	locationDetailController.$inject = ['$routeParams', '$modal', 'loc8rData'];
-	function locationDetailController ($routeParams, $modal, loc8rData) {
+	locationDetailController.$inject = ['$routeParams', '$location', '$modal', 'loc8rData', 'authentication'];
+	function locationDetailController ($routeParams, $location, $modal, loc8rData, authentication) {
 		var vm = this;
 		vm.locationId = $routeParams.locationId;
+		vm.isLoggedIn = authentication.isLoggedIn();
+		vm.currentPath = $location.path();
 
 		loc8rData.locationById(vm.locationId)
 			.success(function (data) {

@@ -1,10 +1,11 @@
 var mongoose = require('mongoose');
 var location = mongoose.model('Location');
+var User = mongoose.model('User');
 
 var sendJsonResponse = function (res, status, content) {
 	res.status(status);
 	res.json(content);
-}
+};
 
 var updateAverageRating = function (locationId, updateAverageRatingCallback) {
 	location.findById(locationId).select('rating reviews').exec( function (err, location) {
@@ -26,24 +27,18 @@ var updateAverageRating = function (locationId, updateAverageRatingCallback) {
 
 		location.rating = parseInt(ratingTotal/reviewCount, 10);
 
-		location.save( updateAverageRatingCallback );//function (err, location) {
-			// if (err) {
-			// 	console.log(err);
-			// } else {
-			// 	console.log("Average rating updated to", location.rating);
-			// }
-		//});
+		location.save( updateAverageRatingCallback );
 	});
-}
+};
 
-var doAddReview = function (req, res, location) {
+var doAddReview = function (req, res, location, author) {
 	if (!location) {
 		sendJsonResponse(res, 404, {"message" : "LocationId not found"});
 		return;
 	}
 
 	location.reviews.push({
-		author: req.body.author,
+		author: author,
 		rating: req.body.rating,
 		reviewText: req.body.reviewText
 	});
@@ -72,23 +67,47 @@ var doAddReview = function (req, res, location) {
 			updateAverageRating(location._id, updateAverageRatingCallback);
 		}
 	});
-}
+};
 
 module.exports.reviewsCreate = function (req, res) {
-	var locationId = req.params.locationId;
-	if (!locationId) {
-		sendJsonResponse(res, 404, {"message" : "Not found, locationId required"});
+	getAuthor(req, res, function (req, res, userName) {
+		var locationId = req.params.locationId;
+		if (!locationId) {
+			sendJsonResponse(res, 404, {"message" : "Not found, locationId required"});
+			return;
+		}
+
+		location.findById(locationId).select('rating reviews').exec( function (err, location) {
+			if (err) {
+				sendJsonResponse(res, 400, err);			
+			} else {
+				doAddReview(req, res, location, userName);
+			}
+		});
+	});
+};
+
+var getAuthor = function (req, res, callback) {
+	if (!req.payload | !req.payload.email) {
+		sendJsonResponse(res, 404, {"message" : "User not found"});
 		return;
 	}
 
-	location.findById(locationId).select('rating reviews').exec( function (err, location) {
-		if (err) {
-			sendJsonResponse(res, 400, err);			
-		} else {
-			doAddReview(req, res, location);
+	User.findOne({email : req.payload.email}).exec(function (err, user) {
+		if (!user) {
+			sendJsonResponse(res, 404, {"message" : "User not found"});
+			return;
 		}
+
+		if (err) {
+			console.log(err);
+			sendJsonResponse(res, 404, err);
+			return;
+		}
+
+		callback(req, res, user.name);
 	});
-}
+};
 
 module.exports.reviewsReadOne = function (req, res) {
 	if (!req.params || !req.params.locationId || !req.params.reviewId) {
@@ -129,7 +148,7 @@ module.exports.reviewsReadOne = function (req, res) {
 		}
 		sendJsonResponse(res, 200, response);		
 	});
-}
+};
 
 module.exports.reviewsUpdateOne = function (req, res) {
 	if (!req.params.locationId || !req.params.reviewId) {
@@ -173,7 +192,7 @@ module.exports.reviewsUpdateOne = function (req, res) {
 		});
 
 	});
-}
+};
 
 module.exports.reviewsDeleteOne = function (req, res) {
 	if (!req.params.locationId || !req.params.reviewId) {
@@ -212,4 +231,4 @@ module.exports.reviewsDeleteOne = function (req, res) {
 			}
 		});
 	});
-}
+};
